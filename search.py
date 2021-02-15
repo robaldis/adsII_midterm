@@ -15,3 +15,11 @@ class Search(object):
                 return i
             i = j
         return -1
+
+
+    def direct_search(self, A, N, X, POS):
+        if (POS[X-1] != -1):
+            return POS[X-1]
+        else:
+            return -1
+

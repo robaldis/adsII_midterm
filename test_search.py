@@ -1,16 +1,3 @@
-# Memory
-    # Setup how large memory we want
-    # What algorithm we want to use
-
-
-# Process
-    # Request allocation of size X
-    # Remove allocation
-
-# Test data
-    # Set in operations (request, unallocate)
-    # Test for each approach
-
 from search import Search
 import random
 import pickle
@@ -20,13 +7,24 @@ import matplotlib.pyplot as plt
 
 
 class Computer (Search):
-    def __init__(self,searchType, size):
+    def __init__(self,searchType, size, maxChunk = 0):
         super().__init__()
         self.size = size
+        self.maxChunk = maxChunk
         self.searchType = searchType
         self.Array = [-1]*size
-        # list of Process
-        self.process = list()
+
+        if (searchType == "directSearch"):
+            assert self.maxChunk != 0
+            if (size/self.maxChunk < self.maxChunk):
+                print("[DirectSearch] Faild to start, too large chunk size")
+            else:
+                self.POS = [0]*self.maxChunk
+                for i in range(self.maxChunk):
+                    self.POS[i] = (size//self.maxChunk)*i
+
+
+
 
 
     def allocate(self, name, chunk_size):
@@ -37,6 +35,14 @@ class Computer (Search):
         
         self.Array[position:position+chunk_size] = [name]*chunk_size
         # return f"[{name}] SUCESS"
+
+        if (self.searchType == "directSearch"):
+            # Update POS
+            if (((self.size/self.maxChunk) * chunk_size-1) + self.maxChunk):
+                # this chunk is full
+                self.POS[chunk_size-1] = -1
+            self.POS[chunk_size-1] = position+chunk_size
+
         return 1
     
     def can_allocate(self, name, chunk_size):
@@ -45,7 +51,7 @@ class Computer (Search):
         if (self.searchType == "exhuastiveSearch"):
             return self.linearSearch(self.Array, self.size, chunk_size)
         if (self.searchType == "directSearch"):
-            return self.linearSearch(self.Array, self.size, chunk_size)
+            return self.direct_search(self.Array, self.size, chunk_size, self.POS)
 
     def remove(self, process):
         for i in range(len(self.Array)):
@@ -59,13 +65,15 @@ class Computer (Search):
 
     def linearSearch(self,A,N,X):
         return super().linear_Search(A,N,X)
+    def directSearch(self,A,N,X):
+        return super().direct_search(A,N,X,POS)
 
 
 
 
 class Test():
     def __init__(self, search, memorySize, instructions):
-        self.comp = Computer(search, memorySize)
+        self.comp = Computer(search, memorySize, 8)
         self.instructions = instructions
 
     def main(self):
@@ -81,7 +89,7 @@ class Test():
             start = time.time()
             suc = self.doInstruction(processName,instruction)
             end = time.time()
-            timeTaken.append(end-start)
+            timeTaken.append((end-start) * 1000)
             frag.append(suc) 
         self.comp.print()
      
@@ -101,13 +109,12 @@ class Test():
 
 
     def plot(self, time, frag):
-        print(time)
+        # print(f"percent of times gets rejected: {(sum(frag)/1000)*100}")
+        print(frag)
         print("do the plot")
-        # plt.plot(time)
-        # plt.ylabel("time")
-        # plt.show()
-        plt.plot([1,2,3,4])
-        plt.ylabel('some numbers')
+        plt.subplot(211)
+        plt.plot(time)
+        plt.ylabel('Time (milliseconds)')
         plt.show()
 
 if __name__ == "__main__":
@@ -115,7 +122,7 @@ if __name__ == "__main__":
     instructions = [[0,2],[0,0]]
     instructions = pickle.load(open("input.prod", "rb"))
     # instructions = [1,2],[2,3],[3,1],[2,0],[4,2],[1,3]
-    test = Test("linearSearch", 16, instructions)
+    test = Test("directSearch", 64, instructions)
     test.main()
 
 

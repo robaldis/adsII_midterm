@@ -13,4 +13,4 @@ def gen_instructions(max_process, max_ask, num_instructions):
 
 
 if __name__ == "__main__":
-    gen_instructions(5,8,100)
+    gen_instructions(5,8,1000)
